@@ -19,6 +19,7 @@ type Validator struct {
 	Value     reflect.Value
 	lastField string
 	fnsMap    map[string][]ValidatorFunction
+	fields    []string
 }
 
 // New creates a new Validator.
@@ -56,6 +57,7 @@ func traverseAddts(value reflect.Value, field string) reflect.Value {
 func (v *Validator) Check(field string) *Validator {
 	if _, ok := v.fnsMap[field]; !ok {
 		v.fnsMap[field] = make([]ValidatorFunction, 0)
+		v.fields = append(v.fields, field)
 	}
 	v.lastField = field
 	return v
@@ -66,7 +68,8 @@ func (v *Validator) Exec(value any) []error {
 	v.Value = depointer(reflect.ValueOf(value))
 
 	errs := make([]error, 0)
-	for field, fns := range v.fnsMap {
+	for _, field := range v.fields {
+		fns := v.fnsMap[field]
 		value := traverseAddts(v.Value, field)
 
 		if !value.IsValid() {
